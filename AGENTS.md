@@ -60,6 +60,28 @@ swiftc -frontend -parse $(find ios-app/Xunidingwei -name '*.swift')
 
 推送 main 后 GitHub Actions 真机编译并发布 release。
 
+## 定位检测靶场（DetectionLab）
+
+第二个 target，只做检测、不改定位，用于研究反作弊如何识别系统级模拟。
+
+- `Engine/TamperDetector.swift`：10 条检测规则的纯逻辑实现，不依赖 CoreLocation
+- `Engine/EnvironmentProbe.swift`：真机采集（CoreLocation + dyld + sysctl）
+- `Engine/EntitlementProbe.swift`：SecTask 读自身权限
+- 测试：`bash tools/detection-tests/run.sh`（23 项，无需 iOS SDK）
+- 打包：`ios-app/build_detection_lab.sh` → `build/DetectionLab.ipa`
+
+注意：靶场**刻意不申请** `locationd.simulation`，否则失去「普通 App 视角」。
+
+## iOS 编译易错点
+
+本地只能做语法解析，类型错误要到 CI 才暴露。踩过的：
+
+- dyld 函数（`_dyld_image_count` / `_dyld_get_image_name`）需要 `import MachO`
+- `ProcessInfo.environment` 是实例属性，要用 `ProcessInfo.processInfo.environment`
+- `sysctl` 的 `CTL_KERN` / `KERN_PROC` / `P_TRACED` 需要 `import Darwin`
+- `TimeZone.secondsFromGMT()` 在 iOS 上是方法，要加括号
+- `CLLocation.sourceInformation` 需 iOS 15+，部署目标已是 15.0
+
 ## 抓日志（排障）
 
 电脑连手机，双击 `windows/grab-log-windows.bat`，手机上操作一次后 Ctrl+C，
