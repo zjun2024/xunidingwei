@@ -1,0 +1,50 @@
+name: Xunidingwei
+options:
+  bundleIdPrefix: com.zjun2024
+  deploymentTarget:
+    iOS: "15.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+    CODE_SIGNING_ALLOWED: NO
+    CODE_SIGNING_REQUIRED: NO
+    CODE_SIGN_IDENTITY: ""
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+
+targets:
+  Xunidingwei:
+    type: application
+    platform: iOS
+    sources:
+      - path: Xunidingwei
+        excludes:
+          - "Info.plist"
+          - "*.entitlements"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zjun2024.xunidingwei
+        PRODUCT_NAME: Xunidingwei
+        INFOPLIST_FILE: Xunidingwei/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Xunidingwei/Xunidingwei.entitlements
+        TARGETED_DEVICE_FAMILY: "1"
+        SUPPORTS_MACCATALYST: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - sdk: Security.framework
+      - sdk: CoreLocation.framework
+      - sdk: AVFoundation.framework
+
+schemes:
+  Xunidingwei:
+    build:
+      targets:
+        Xunidingwei: all
+    run:
+      config: Release
+    archive:
+      config: Release
