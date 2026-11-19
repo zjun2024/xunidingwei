@@ -1,5 +1,7 @@
 import CoreLocation
+import Darwin
 import Foundation
+import MachO
 
 /// 从真实系统采集检测所需的原始数据，再交给 TamperDetector 判定。
 /// 采集与判定分离：判定是纯函数可测，采集只能在真机跑。
@@ -83,13 +85,14 @@ final class EnvironmentProbe: NSObject, ObservableObject, CLLocationManagerDeleg
     /// 采集进程环境快照。
     private func collectInjectionEnvironment() -> InjectionEnvironment {
         var paths: [String] = []
-        for i in 0..<_dyld_image_count() {
+        let count = _dyld_image_count()
+        for i in 0..<count {
             if let name = _dyld_get_image_name(i) {
                 paths.append(String(cString: name))
             }
         }
 
-        let env = ProcessInfo.environment
+        let env = ProcessInfo.processInfo.environment
         let traced = EnvironmentProbe.isDebuggerAttached
 
         let suspicious = ["/var/jb/bin/sh", "/usr/bin/sbinpack", "/Library/MobileSubstrate"]
