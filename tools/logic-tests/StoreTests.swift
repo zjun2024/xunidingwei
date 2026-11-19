@@ -37,6 +37,24 @@ store.handleInput("恢复", catalog: catalog)
 print("恢复提示:", store.message ?? "-")
 expect(store.message == "已恢复真实定位", "恢复命令应生效")
 
+// 悬浮窗保活：默认关闭，且未模拟时开启也不应真的启动
+let pip = PiPKeepAlive.shared
+expect(store.pipEnabled == false, "悬浮窗保活默认应为关闭")
+store.pipEnabled = true
+expect(!pip.isRunning, "未模拟定位时不应启动画中画")
+expect(pip.startedCaptions.isEmpty, "未模拟定位时不应喂入任何画面")
+expect(UserDefaults.standard.object(forKey: "pipEnabled") as? Bool == true,
+       "悬浮窗开关应写入 UserDefaults")
+store.pipEnabled = false
+expect(UserDefaults.standard.object(forKey: "pipEnabled") as? Bool == false,
+       "关闭后也应写入 UserDefaults")
+expect(!pip.isRunning, "关闭悬浮窗保活后应停止")
+
+// 恢复命令也应停掉悬浮窗
+store.pipEnabled = true
+store.handleInput("恢复", catalog: catalog)
+expect(!pip.isRunning, "恢复真实定位应停掉画中画")
+
 // 历史记录持久化
 store.clearHistory()
 expect(store.history.isEmpty, "清空后历史应为空")

@@ -24,6 +24,17 @@ final class LocSimStore: ObservableObject {
         }
     }
 
+    /// 悬浮窗保活（画中画）。iOS 上跨 App 悬浮只有画中画这一条路，
+    /// 它同时也是最稳的后台保活方式：会话活跃时进程不会被挂起。
+    @Published var pipEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(pipEnabled, forKey: Keys.pip)
+            applyPiP()
+        }
+    }
+
+    @Published private(set) var pipError: String?
+
     struct HistoryEntry: Codable, Identifiable, Equatable {
         var id = UUID()
         let label: String
@@ -38,14 +49,17 @@ final class LocSimStore: ObservableObject {
 
     private enum Keys {
         static let keepAlive = "keepAliveEnabled"
+        static let pip = "pipEnabled"
         static let history = "locationHistory"
     }
 
     private let engine = LocSimEngine.shared
     private let keepAlive = KeepAlive()
+    private let pip = PiPKeepAlive.shared
 
     private init() {
         keepAliveEnabled = UserDefaults.standard.object(forKey: Keys.keepAlive) as? Bool ?? true
+        pipEnabled = UserDefaults.standard.object(forKey: Keys.pip) as? Bool ?? false
         loadHistory()
     }
 
@@ -98,6 +112,9 @@ final class LocSimStore: ObservableObject {
             DiagnosticItem(title: "后台保活",
                            ok: keepAlive.isActive,
                            hint: "保活只在定位进行中启动；未开始定位时这一项为空是正常的。"),
+            DiagnosticItem(title: "悬浮窗保活（画中画）",
+                           ok: PiPKeepAlive.isSupported,
+                           hint: "iOS 的跨 App 悬浮只有画中画一种形式。系统不支持时这一项会失败，可继续用上面的后台保活。"),
         ]
     }
 
@@ -110,6 +127,7 @@ final class LocSimStore: ObservableObject {
             message = "已定位到 \(target.label)（\(target.coordinateText)）"
             record(target)
             applyKeepAlive()
+            applyPiP()
             UINotificationFeedbackGenerator().notificationOccurred(.success)
         } catch {
             status = .failed(error.localizedDescription)
@@ -124,6 +142,8 @@ final class LocSimStore: ObservableObject {
             status = .idle
             message = "已恢复真实定位"
             keepAlive.stop()
+            pip.stop()
+            pipError = nil
         } catch {
             status = .failed(error.localizedDescription)
             message = error.localizedDescription
@@ -205,6 +225,23 @@ final class LocSimStore: ObservableObject {
         } else {
             keepAlive.stop()
         }
+    }
+
+    /// 悬浮窗保活的联动逻辑，与 applyKeepAlive 平行。
+    private func applyPiP() {
+        guard isSimulating, let target = activeTarget else {
+            pip.stop()
+            pipError = nil
+            return
+        }
+        guard pipEnabled else {
+            pip.stop()
+            pipError = nil
+            return
+        }
+        // 悬浮窗上分两行显示：城市名 + 坐标，方便一眼确认当前状态。
+        pip.start(caption: "\(target.label)\n\(target.coordinateText)")
+        pipError = pip.lastError
     }
 
     /// App 回到前台时校验一次，避免定位被系统悄悄清掉。

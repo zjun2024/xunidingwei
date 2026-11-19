@@ -49,6 +49,31 @@ enum DiagnosticLog {
 }
 SWIFTLOG
 
+# 画中画保活依赖 AVKit，Linux 上给一个同接口的空实现，
+# 只验证状态机联动（开关是否被正确记录与调用），不验证真实画中画行为。
+cat > "$BUILD/PiPKeepAlive.swift" <<'SWIFTPIP'
+import Foundation
+
+final class PiPKeepAlive {
+    static let shared = PiPKeepAlive()
+    static var isSupported: Bool { true }
+    private(set) var lastError: String?
+    private(set) var startedCaptions: [String] = []
+    private(set) var isRunning = false
+
+    private init() {}
+
+    func start(caption: String) {
+        startedCaptions.append(caption)
+        isRunning = true
+    }
+
+    func stop() {
+        isRunning = false
+    }
+}
+SWIFTPIP
+
 # 状态机只依赖 Foundation，去掉平台框架的 import。
 sed -e 's/^import Combine$//' -e 's/^import SwiftUI$//' -e 's/^import UIKit$//' \
     "$APP/Engine/LocSimStore.swift" > "$BUILD/LocSimStore.swift"
@@ -62,6 +87,7 @@ sed -e 's/^import Combine$//' -e 's/^import SwiftUI$//' -e 's/^import UIKit$//' 
     "$APP/Generated/LocationData.swift" \
     "$BUILD/LocSimEngine.swift" \
     "$BUILD/DiagnosticLog.swift" \
+    "$BUILD/PiPKeepAlive.swift" \
     "$BUILD/LocSimStore.swift" \
     "$BUILD/main.swift" \
     -o "$BUILD/logic-tests"

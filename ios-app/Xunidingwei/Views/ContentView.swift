@@ -127,6 +127,26 @@ struct ContentView: View {
                     get: { store.keepAliveEnabled },
                     set: { store.keepAliveEnabled = $0 }
                 ))
+
+                Toggle("悬浮窗保活", isOn: Binding(
+                    get: { store.pipEnabled },
+                    set: { store.pipEnabled = $0 }
+                ))
+                if store.pipEnabled {
+                    Text("开启后会出现一个悬浮小窗显示当前坐标。iOS 只允许画中画形式悬浮，切到其他 App 也能看到，同时保持后台运行。")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    // 画中画只能从屏幕上的内联位置启动，所以这块视图必须真实存在。
+                    PiPHostView(displayLayer: PiPKeepAlive.shared.displayLayer)
+                        .frame(height: 1)
+                        .opacity(0.01)
+                        .allowsHitTesting(false)
+                    if let error = store.pipError {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                    }
+                }
                 Button {
                     if let target = store.activeTarget {
                         verifier.verify(expected: target)

@@ -44,6 +44,7 @@ targets:
       - sdk: CoreLocation.framework
       - sdk: MapKit.framework
       - sdk: AVFoundation.framework
+      - sdk: AVKit.framework
 
   DetectionLab:
     type: application
