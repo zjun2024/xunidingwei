@@ -4,8 +4,7 @@
 #
 # 用法: tools/logic-tests/run.sh
 #
-# 需要 swiftc（Linux 或 macOS 都可以）。macOS 上直接用系统 swiftc 即可；
-# Linux 上需要 Swift 5.9+ 工具链。
+# 需要 swiftc（Linux 或 macOS 都可以）。
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,20 +20,17 @@ fi
 BUILD="$(mktemp -d)"
 trap 'rm -rf "$BUILD"' EXIT
 
-# 引擎在测试里不需要 Security 的私有符号，去掉那两行声明后由桩提供。
+# 引擎去掉平台框架的 import 和 SecTask 的 @_silgen_name 声明，
+# 改由 ObjCStubs.swift 提供同名函数，这样在 Linux 上也能链接。
 python3 - "$APP/Engine/LocSimEngine.swift" "$BUILD/LocSimEngine.swift" <<'PY'
+import re
 import sys
+
 src, dst = sys.argv[1], sys.argv[2]
 text = open(src, encoding="utf-8").read()
 text = text.replace("import CoreLocation\n", "").replace("import Security\n", "")
-text = text.replace(
-    '''// SecTask 是 Security 框架里的私有 SPI，没有公开头文件，这里手写声明。
-typealias SecTaskRef = CFTypeRef
-@_silgen_name("SecTaskCreateFromSelf")
-func SecTaskCreateFromSelf(_ allocator: CFAllocator?) -> SecTaskRef?
-@_silgen_name("SecTaskCopyValueForEntitlement")
-func SecTaskCopyValueForEntitlement(_ task: SecTaskRef, _ entitlement: CFString, _ error: UnsafeMutablePointer<Unmanaged<CFError>?>?) -> CFTypeRef?''',
-    "typealias SecTaskRef = CFTypeRef")
+text = re.sub(r"typealias XdwSecTask = CFTypeRef\n", "", text)
+text = re.sub(r'@_silgen_name\("SecTask\w+"\)\nfunc SecTask\w+\(.*?\) -> [^\n]*\n', "", text, flags=re.S)
 open(dst, "w", encoding="utf-8").write(text)
 PY
 

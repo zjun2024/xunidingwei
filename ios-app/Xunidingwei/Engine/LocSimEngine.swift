@@ -3,11 +3,12 @@ import Foundation
 import Security
 
 // SecTask 是 Security 框架里的私有 SPI，没有公开头文件，这里手写声明。
-typealias SecTaskRef = CFTypeRef
+// 自定义类型名，避免与 SDK 里可能存在的同名类型冲突。
+typealias XdwSecTask = CFTypeRef
 @_silgen_name("SecTaskCreateFromSelf")
-func SecTaskCreateFromSelf(_ allocator: CFAllocator?) -> SecTaskRef?
+func SecTaskCreateFromSelf(_ allocator: CFAllocator?) -> XdwSecTask?
 @_silgen_name("SecTaskCopyValueForEntitlement")
-func SecTaskCopyValueForEntitlement(_ task: SecTaskRef, _ entitlement: CFString, _ error: UnsafeMutablePointer<Unmanaged<CFError>?>?) -> CFTypeRef?
+func SecTaskCopyValueForEntitlement(_ task: XdwSecTask, _ entitlement: CFString, _ error: UnsafeMutablePointer<Unmanaged<CFError>?>?) -> CFTypeRef?
 
 /// 定位模拟引擎。
 ///
