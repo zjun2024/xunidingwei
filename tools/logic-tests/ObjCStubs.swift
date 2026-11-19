@@ -5,11 +5,16 @@ typealias CFString = NSString
 typealias CFAllocator = AnyObject
 typealias CFError = AnyObject
 typealias CFOptionFlags = UInt
+// 与真实 SDK 一致：CFNotificationName 是可用 CFString 构造的结构体
+struct CFNotificationName {
+    let rawValue: CFString
+    init(_ rawValue: CFString) { self.rawValue = rawValue }
+}
 let kCFNotificationDeliverImmediately: CFOptionFlags = 4
 
 func CFRelease(_ obj: CFTypeRef) {}
 func CFNotificationCenterGetDarwinNotifyCenter() -> OpaquePointer { OpaquePointer(bitPattern: 1)! }
-func CFNotificationCenterPostNotificationWithOptions(_ c: OpaquePointer, _ n: CFString,
+func CFNotificationCenterPostNotificationWithOptions(_ c: OpaquePointer, _ n: CFNotificationName,
                                                      _ o: UnsafeRawPointer?, _ u: CFTypeRef?,
                                                      _ f: CFOptionFlags) {}
 

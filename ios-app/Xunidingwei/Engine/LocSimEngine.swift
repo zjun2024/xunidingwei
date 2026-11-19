@@ -56,11 +56,9 @@ final class LocSimEngine {
     /// 运行时的权限检查：直接问内核“我这个进程有没有这条权限”。
     var hasSimulationEntitlement: Bool {
         guard let task = SecTaskCreateFromSelf(nil) else { return false }
-        defer { CFRelease(task) }
         guard let value = SecTaskCopyValueForEntitlement(
             task, "com.apple.locationd.simulation" as CFString, nil
         ) else { return false }
-        defer { CFRelease(value) }
         return (value as? NSNumber)?.boolValue ?? false
     }
 
@@ -91,7 +89,7 @@ final class LocSimEngine {
     private func postTimezoneUpdate() {
         CFNotificationCenterPostNotificationWithOptions(
             CFNotificationCenterGetDarwinNotifyCenter(),
-            "AutomaticTimeZoneUpdateNeeded" as CFString,
+            CFNotificationName("AutomaticTimeZoneUpdateNeeded" as CFString),
             nil, nil,
             kCFNotificationDeliverImmediately
         )
