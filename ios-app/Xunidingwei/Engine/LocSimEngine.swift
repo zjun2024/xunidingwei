@@ -39,12 +39,18 @@ final class LocSimEngine {
     private(set) var activeTarget: LocationTarget?
     private(set) var startedAt: Date?
 
+    /// 让 `NSClassFromString` 拿到的类型可以直接 `init()`；
+    /// 直接对 `NSObject.Type` 调 `init()` 会报 "must use a required initializer"。
+    private protocol RuntimeInitializable: AnyObject {
+        init()
+    }
+
     private let classNames = ["CLSimulationManager"]
     private var manager: NSObject?
 
     private init() {}
 
-    var isClassAvailable: Bool { simulationClass() != nil }
+    var isClassAvailable: Bool { simulationType() != nil }
 
     /// 运行时的权限检查：直接问内核“我这个进程有没有这条权限”。
     var hasSimulationEntitlement: Bool {
@@ -57,9 +63,9 @@ final class LocSimEngine {
         return (value as? NSNumber)?.boolValue ?? false
     }
 
-    private func simulationClass() -> NSObject.Type? {
+    private func simulationType() -> RuntimeInitializable.Type? {
         for name in classNames {
-            if let type = NSClassFromString(name) as? NSObject.Type {
+            if let type = NSClassFromString(name) as? RuntimeInitializable.Type {
                 return type
             }
         }
@@ -68,9 +74,9 @@ final class LocSimEngine {
 
     private func makeManager() throws -> NSObject {
         if let manager = manager { return manager }
-        guard let type = simulationClass() else { throw EngineError.classUnavailable }
+        guard let type = simulationType() else { throw EngineError.classUnavailable }
         guard hasSimulationEntitlement else { throw EngineError.noEntitlement }
-        let instance = type.init()
+        guard let instance = type.init() as? NSObject else { throw EngineError.classUnavailable }
         manager = instance
         return instance
     }

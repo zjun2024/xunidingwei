@@ -3,8 +3,14 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject private var store: LocSimStore
     @State private var input = ""
-    @State private var showCatalog = false
-    @State private var showDiagnostics = false
+
+    /// iOS 15 下同一个视图挂多个 sheet 只有最后一个生效，所以合并成一个。
+    private enum Sheet: Int, Identifiable {
+        case catalog, diagnostics
+        var id: Int { rawValue }
+    }
+
+    @State private var sheet: Sheet?
 
     private let catalog = LocationCatalog.shared
 
@@ -24,7 +30,7 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        showCatalog = true
+                        sheet = .catalog
                     } label: {
                         Image(systemName: "list.bullet")
                     }
@@ -32,23 +38,25 @@ struct ContentView: View {
                 }
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {
-                        showDiagnostics = true
+                        sheet = .diagnostics
                     } label: {
                         Image(systemName: "stethoscope")
                     }
                     .accessibilityLabel("环境自检")
                 }
             }
-            .sheet(isPresented: $showCatalog) {
-                CatalogView { place in
-                    store.simulate(LocationTarget(label: place.label,
-                                                  latitude: place.latitude,
-                                                  longitude: place.longitude))
-                    showCatalog = false
+            .sheet(item: $sheet) { which in
+                switch which {
+                case .catalog:
+                    CatalogView { place in
+                        store.simulate(LocationTarget(label: place.label,
+                                                      latitude: place.latitude,
+                                                      longitude: place.longitude))
+                        sheet = nil
+                    }
+                case .diagnostics:
+                    DiagnosticsView()
                 }
-            }
-            .sheet(isPresented: $showDiagnostics) {
-                DiagnosticsView()
             }
             .alert(isPresented: Binding(
                 get: { store.message != nil },
@@ -161,12 +169,12 @@ struct ContentView: View {
     private var quickSection: some View {
         Section(header: Text("快捷")) {
             Button {
-                showCatalog = true
+                sheet = .catalog
             } label: {
                 Label("浏览全部地点（\(LocationData.places.count) 个城市）", systemImage: "globe.asia.australia")
             }
             Button {
-                showDiagnostics = true
+                sheet = .diagnostics
             } label: {
                 Label("环境自检", systemImage: "checkmark.shield")
             }

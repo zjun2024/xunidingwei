@@ -24,7 +24,7 @@ echo "==> 同步地点表"
 python3 ../tools/gen_locations.py
 
 echo "==> 生成 Xcode 工程"
-xcodegen generate --quiet
+xcodegen generate
 
 echo "==> 编译（不签名）"
 xcodebuild \

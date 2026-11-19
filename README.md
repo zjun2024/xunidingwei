@@ -83,6 +83,10 @@ docs/技术方案.md          手机端方案说明
 修改地点只需改 `windows/ios_loc.py` 的 `DATA` 表，然后运行：
 
 ```bash
-python3 tools/gen_locations.py
-python3 tools/test_parity.py
+python3 tools/gen_locations.py      # 重新生成 Swift 地点表
+python3 tools/test_parity.py        # 校验两端解析规则一致
+bash tools/logic-tests/run.sh       # 用桩跑引擎与状态机（无需 Xcode）
 ```
+
+`tools/logic-tests/` 用桩替代 UIKit、SwiftUI、CoreLocation、AVFoundation，
+在没有 iOS SDK 的机器上也能真实执行引擎调用、错误提示、历史记录等逻辑。
