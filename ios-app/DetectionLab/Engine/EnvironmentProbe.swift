@@ -67,7 +67,7 @@ final class EnvironmentProbe: NSObject, ObservableObject, CLLocationManagerDeleg
     // MARK: - 判定
 
     func evaluate() {
-        let tzHours = Double(TimeZone.current.secondsFromGMT) / 3600.0
+        let tzHours = Double(TimeZone.current.secondsFromGMT()) / 3600.0
         var all = TamperDetector.checkLocation(samples, deviceTimeZoneOffsetHours: tzHours)
         all += TamperDetector.checkInjection(collectInjectionEnvironment())
         findings = all
