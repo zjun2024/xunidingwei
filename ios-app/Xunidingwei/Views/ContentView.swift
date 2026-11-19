@@ -138,7 +138,7 @@ struct ContentView: View {
                         .foregroundColor(.secondary)
                     // 画中画只能从屏幕上的内联位置启动，所以这块视图必须真实存在。
                     PiPHostView(displayLayer: PiPKeepAlive.shared.displayLayer)
-                        .frame(height: 1)
+                        .frame(width: 1, height: 1)
                         .opacity(0.01)
                         .allowsHitTesting(false)
                     if let error = store.pipError {

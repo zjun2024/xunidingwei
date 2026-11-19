@@ -25,7 +25,9 @@ final class PiPKeepAlive: NSObject, ObservableObject {
     private var formatDescription: CMVideoFormatDescription?
     private var caption = "寻定位"
 
-    private let bufferSize = CGSize(width: 480, height: 270)
+    /// 画中画窗口的尺寸由系统按画面宽高比决定，App 无法直接指定。
+    /// 用正方形画布能让窗口收到最小，内容再画成圆形即可。
+    private let bufferSize = CGSize(width: 400, height: 400)
     private var frameIndex: Int64 = 0
 
     private override init() {
@@ -158,42 +160,49 @@ final class PiPKeepAlive: NSObject, ObservableObject {
         return pixelBuffer
     }
 
+    /// 画一个圆形徽标：外圈绿点 + 中央定位图标 + 底部一行坐标。
+    /// 圆形比文字块更小更不挡视线，也更容易一眼确认状态。
     private func draw(caption: String, in context: CGContext, size: CGSize) {
-        context.setFillColor(UIColor.black.cgColor)
-        context.fill(CGRect(origin: .zero, size: size))
+        context.setFillColor(UIColor.clear.cgColor)
+        context.clear(CGRect(origin: .zero, size: size))
 
         UIGraphicsPushContext(context)
         defer { UIGraphicsPopContext() }
 
-        let lines = caption.components(separatedBy: "\n")
-        let title = lines.first ?? caption
-        let detail = lines.count > 1 ? lines.dropFirst().joined(separator: "\n") : ""
+        let center = CGPoint(x: size.width / 2, y: size.height / 2)
+        let radius = min(size.width, size.height) / 2 - 8
 
-        let titleAttrs: [NSAttributedString.Key: Any] = [
-            .font: UIFont.systemFont(ofSize: 34, weight: .semibold),
-            .foregroundColor: UIColor.white,
-        ]
-        let detailAttrs: [NSAttributedString.Key: Any] = [
-            .font: UIFont.monospacedDigitSystemFont(ofSize: 24, weight: .regular),
-            .foregroundColor: UIColor(white: 0.75, alpha: 1),
-        ]
+        // 深色圆底
+        context.setFillColor(UIColor(white: 0.09, alpha: 1).cgColor)
+        context.fillEllipse(in: CGRect(x: center.x - radius, y: center.y - radius,
+                                       width: radius * 2, height: radius * 2))
 
-        let titleSize = (title as NSString).size(withAttributes: titleAttrs)
-        let detailSize = detail.isEmpty ? .zero : (detail as NSString).size(withAttributes: detailAttrs)
+        // 绿色描边，与 App 内「正在模拟」的配色一致
+        context.setStrokeColor(UIColor.systemGreen.cgColor)
+        context.setLineWidth(10)
+        context.strokeEllipse(in: CGRect(x: center.x - radius, y: center.y - radius,
+                                         width: radius * 2, height: radius * 2))
 
-        let totalHeight = titleSize.height + (detail.isEmpty ? 0 : detailSize.height + 6)
-        var y = (size.height - totalHeight) / 2
-
-        (title as NSString).draw(
-            at: CGPoint(x: (size.width - titleSize.width) / 2, y: y),
-            withAttributes: titleAttrs)
-        y += titleSize.height + 6
-
-        if !detail.isEmpty {
-            (detail as NSString).draw(
-                at: CGPoint(x: (size.width - detailSize.width) / 2, y: y),
-                withAttributes: detailAttrs)
+        // 中央定位图标
+        let symbolConfig = UIImage.SymbolConfiguration(pointSize: radius * 0.7, weight: .semibold)
+        if let icon = UIImage(systemName: "location.fill", withConfiguration: symbolConfig)?
+            .withTintColor(.white, renderingMode: .alwaysOriginal) {
+            let iconSize = icon.size
+            icon.draw(at: CGPoint(x: center.x - iconSize.width / 2,
+                                  y: center.y - iconSize.height / 2 - radius * 0.12))
         }
+
+        // 底部坐标
+        let detail = caption.components(separatedBy: "\n").last ?? caption
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: UIFont.monospacedDigitSystemFont(ofSize: radius * 0.2, weight: .medium),
+            .foregroundColor: UIColor(white: 0.78, alpha: 1),
+        ]
+        let textSize = (detail as NSString).size(withAttributes: attrs)
+        (detail as NSString).draw(
+            at: CGPoint(x: center.x - textSize.width / 2,
+                        y: center.y + radius * 0.42),
+            withAttributes: attrs)
     }
 }
 
