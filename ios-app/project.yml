@@ -30,6 +30,11 @@ targets:
         PRODUCT_NAME: Xunidingwei
         INFOPLIST_FILE: Xunidingwei/Info.plist
         CODE_SIGN_ENTITLEMENTS: Xunidingwei/Xunidingwei.entitlements
+        SWIFT_OBJC_BRIDGING_HEADER: Xunidingwei/Bridging/Xunidingwei-Bridging-Header.h
+        # 私有头文件只有声明没有实现，符号在运行时由 CoreLocation 提供
+        CLANG_ENABLE_MODULES: YES
+        # 桥接头 #import 的私有头文件在 Private/ 下
+        HEADER_SEARCH_PATHS: "$(SRCROOT)/Xunidingwei/Private"
         TARGETED_DEVICE_FAMILY: "1"
         SUPPORTS_MACCATALYST: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

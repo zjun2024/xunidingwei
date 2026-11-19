@@ -64,7 +64,6 @@ final class LocSimStore: ObservableObject {
     // MARK: - 环境自检
 
     var entitlementOK: Bool { engine.hasSimulationEntitlement }
-    var engineAvailable: Bool { engine.isClassAvailable }
 
     struct DiagnosticItem: Identifiable {
         let id = UUID()
@@ -74,17 +73,31 @@ final class LocSimStore: ObservableObject {
     }
 
     /// 与 Windows 版 `check` 命令对应的自检项。
+    ///
+    /// 第一项分两级：类不存在，或类存在但缺少关键方法。
+    /// 两者提示不同，便于定位是系统版本问题还是私有 API 变动。
     func diagnostics() -> [DiagnosticItem] {
-        [
+        let hasClass = engine.isClassAvailable
+        let hasInterface = hasClass && engine.isInterfaceComplete
+        let engineHint: String
+        if !hasClass {
+            engineHint = "系统里没有 CLSimulationManager 这个类，说明当前系统版本不支持这条通道。"
+        } else if !hasInterface {
+            engineHint = "找到 CLSimulationManager，但缺少模拟所需的方法，可能是系统版本改了私有接口。"
+        } else {
+            engineHint = "系统组件与所需方法都在。"
+        }
+
+        return [
             DiagnosticItem(title: "定位模拟引擎（CLSimulationManager）",
-                           ok: engineAvailable,
-                           hint: "只支持 iOS 15 及以上；更低版本没有这个系统组件。"),
+                           ok: hasInterface,
+                           hint: engineHint),
             DiagnosticItem(title: "定位模拟权限（locationd.simulation）",
                            ok: entitlementOK,
                            hint: "必须安装本仓库打包的 ipa。用别的工具重新签名会丢掉这条权限。"),
             DiagnosticItem(title: "后台保活",
                            ok: keepAlive.isActive,
-                           hint: "打开「后台保活」后，锁屏或切到其他 App 时定位才不会中断。"),
+                           hint: "保活只在定位进行中启动；未开始定位时这一项为空是正常的。"),
         ]
     }
 
