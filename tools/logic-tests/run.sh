@@ -11,12 +11,16 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
 APP="$ROOT/ios-app/Xunidingwei"
 
+# 这套桩只适用于 Linux：桩里重新声明了 CFTypeRef、NSObject.perform 等，
+# 在 macOS 上这些都是真实符号，会报重复声明。macOS 上由 Xcode 真实编译覆盖。
+if [ "$(uname -s)" = "Darwin" ]; then
+    echo "跳过：macOS 上由 Xcode 真实编译覆盖，无需桩测试"
+    exit 0
+fi
+
 SWIFTC="${SWIFTC:-swiftc}"
 # Linux 上的 Swift 工具链默认用 gold 链接器，通常不可用，改用 lld。
-LINK_FLAGS=()
-if [ "$(uname -s)" = "Linux" ]; then
-    LINK_FLAGS=(-use-ld=lld)
-fi
+LINK_FLAGS=(-use-ld=lld)
 BUILD="$(mktemp -d)"
 trap 'rm -rf "$BUILD"' EXIT
 
@@ -41,8 +45,7 @@ cp "$HERE/StoreTests.swift" "$BUILD/main.swift"
 sed -e 's/^import Combine$//' -e 's/^import SwiftUI$//' -e 's/^import UIKit$//' \
     "$APP/Engine/LocSimStore.swift" > "$BUILD/LocSimStore.swift"
 
-# macOS 自带 bash 3.2，set -u 下直接展开空数组会报错。
-"$SWIFTC" -O ${LINK_FLAGS[@]+"${LINK_FLAGS[@]}"} \
+"$SWIFTC" -O "${LINK_FLAGS[@]}" \
     "$HERE/PlatformStubs.swift" \
     "$HERE/ObjCStubs.swift" \
     "$HERE/SwiftUIStubs.swift" \
