@@ -11,6 +11,7 @@ struct ContentView: View {
     }
 
     @State private var sheet: Sheet?
+    @StateObject private var verifier = LocationVerifier()
 
     private let catalog = LocationCatalog.shared
 
@@ -127,12 +128,47 @@ struct ContentView: View {
                     set: { store.keepAliveEnabled = $0 }
                 ))
                 Button {
+                    if let target = store.activeTarget {
+                        verifier.verify(expected: target)
+                    }
+                } label: {
+                    Label("验证是否生效", systemImage: "checkmark.seal")
+                }
+                if let text = verdictText {
+                    Text(text)
+                        .font(.caption)
+                        .foregroundColor(verdictColor)
+                }
+                Button {
                     store.clear()
                 } label: {
                     Label("恢复真实定位", systemImage: "arrow.uturn.backward")
                         .foregroundColor(.red)
                 }
             }
+        }
+    }
+
+    private var verdictText: String? {
+        switch verifier.verdict {
+        case .pending:
+            return nil
+        case .matched:
+            return "验证通过：系统已采用模拟坐标。"
+        case .notApplied(let actual):
+            guard let actual else { return "验证未通过：系统没有返回坐标。" }
+            return String(format: "验证未通过：系统当前坐标是 %.4f, %.4f，模拟没有生效。",
+                          actual.latitude, actual.longitude)
+        case .failed(let reason):
+            return "验证失败：\(reason)"
+        }
+    }
+
+    private var verdictColor: Color {
+        switch verifier.verdict {
+        case .matched: return .green
+        case .notApplied, .failed: return .orange
+        case .pending: return .secondary
         }
     }
 

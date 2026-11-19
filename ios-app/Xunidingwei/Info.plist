@@ -38,5 +38,9 @@
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>用于在 App 内显示并校验当前模拟的位置。</string>
+        <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+        <string>用于在 App 内显示并校验当前模拟的位置。</string>
+        <key>NSLocationAlwaysUsageDescription</key>
+        <string>用于在 App 内显示并校验当前模拟的位置。</string>
 </dict>
 </plist>

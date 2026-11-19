@@ -2,14 +2,25 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-<!-- 驱动 locationd 做定位模拟，CLSimulationManager 必需 -->
+<!-- 驱动 locationd 做定位模拟 -->
 <key>com.apple.locationd.simulation</key>
 <true/>
+
 <!-- 以平台应用身份运行，TrollStore 环境下不加会被沙盒限制 -->
 <key>platform-application</key>
 <true/>
-<!-- 允许访问自己的数据容器；去掉它 UserDefaults 会写入失败，
-     导致保活开关和历史记录无法保存 -->
+
+<!-- 关键：platform-application 会让沙盒变紧，locationd 的 XPC 连接会被静默丢弃，
+     表现就是“方法调用全部成功、但定位毫无变化”。这里补上免沙盒与相关豁免。
+     参考 TrollTools / Geranium 两个可用的巨魔定位工具的权限组合。 -->
+<key>com.apple.private.security.no-sandbox</key>
+<true/>
+<key>com.apple.private.security.container-manager</key>
+<true/>
+<key>com.apple.private.security.system-application</key>
+<true/>
+
+<!-- 允许访问自己的数据容器；去掉它 UserDefaults 会写入失败 -->
 <key>com.apple.private.security.storage.AppDataContainers</key>
 <true/>
 </dict>
