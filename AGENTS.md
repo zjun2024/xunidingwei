@@ -17,11 +17,12 @@ ios-app/
       LocSimEngine.swift      私有 API CLSimulationManager 驱动 locationd
       LocSimStore.swift       全局状态、历史、保活联动
       KeepAlive.swift         无声音频后台保活
+      PiPKeepAlive.swift      画中画悬浮窗保活（兼跨 App 悬浮显示）
       LocationVerifier.swift  CLLocationManager 读回坐标做实测校验
       DiagnosticLog.swift     os_log 出口（subsystem com.zjun2024.xunidingwei）
     Private/CLSimulationManager.h   私有类声明（只有声明，实现由系统提供）
     Bridging/Xunidingwei-Bridging-Header.h
-    Views/                    含 MapPickerView（MapKit 选点）
+    Views/                    含 MapPickerView（MapKit 选点）、PiPHostView
 windows/
   ios_loc.py                  原 Windows 工具（pymobiledevice3）
   grab_log.py                 一键抓手机日志
@@ -59,6 +60,19 @@ swiftc -frontend -parse $(find ios-app/Xunidingwei -name '*.swift')
 ```
 
 推送 main 后 GitHub Actions 真机编译并发布 release。
+
+## 悬浮窗保活（画中画）
+
+iOS 没有 Android 那种任意悬浮窗，跨 App 悬浮唯一形式是画中画。因此「悬浮窗保活」
+就是 PiP：`AVSampleBufferDisplayLayer` 每秒喂一帧，窗口里显示城市与坐标；
+会话活跃期间进程不被挂起，兼作保活。
+
+要点：
+
+- 画中画只能从**屏幕上的内联位置**启动，`PiPHostView` 必须真实存在于视图层级
+- `UIBackgroundModes` 需同时有 `audio` 与 `picture-in-picture`
+- 播放时间范围返回无限时长，否则系统会按「播完」结束会话
+- 与音频保活独立：`keepAliveEnabled` 与 `pipEnabled` 两个开关互不影响
 
 ## 定位检测靶场（DetectionLab）
 
