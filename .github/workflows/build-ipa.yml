@@ -37,6 +37,9 @@ jobs:
       - name: 编译并运行引擎与状态机逻辑测试
         run: bash tools/logic-tests/run.sh
 
+      - name: 运行检测规则测试
+        run: bash tools/detection-tests/run.sh
+
       - name: 安装工具
         run: |
           brew install xcodegen ldid
@@ -45,11 +48,17 @@ jobs:
         working-directory: ios-app
         run: ./build_ipa.sh
 
+      - name: 打包检测靶场 iPA
+        working-directory: ios-app
+        run: ./build_detection_lab.sh
+
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
         with:
           name: Xunidingwei-ipa
-          path: ios-app/build/Xunidingwei.ipa
+          path: |
+            ios-app/build/Xunidingwei.ipa
+            ios-app/build/DetectionLab.ipa
           if-no-files-found: error
 
       - name: 发布到 Release
@@ -64,7 +73,9 @@ jobs:
             手机端虚拟定位 iPA（TrollStore / 巨魔环境直接安装）。
 
             安装：把 `Xunidingwei.ipa` 传到手机，用 TrollStore 打开即可。
-          files: ios-app/build/Xunidingwei.ipa
+          files: |
+            ios-app/build/Xunidingwei.ipa
+            ios-app/build/DetectionLab.ipa
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

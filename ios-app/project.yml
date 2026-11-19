@@ -45,11 +45,41 @@ targets:
       - sdk: MapKit.framework
       - sdk: AVFoundation.framework
 
+  DetectionLab:
+    type: application
+    platform: iOS
+    sources:
+      - path: DetectionLab
+        excludes:
+          - "Info.plist"
+          - "*.entitlements"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zjun2024.detectionlab
+        PRODUCT_NAME: DetectionLab
+        INFOPLIST_FILE: DetectionLab/Info.plist
+        CODE_SIGN_ENTITLEMENTS: DetectionLab/DetectionLab.entitlements
+        TARGETED_DEVICE_FAMILY: "1"
+        SUPPORTS_MACCATALYST: NO
+        GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - sdk: Security.framework
+      - sdk: CoreLocation.framework
+
 schemes:
   Xunidingwei:
     build:
       targets:
         Xunidingwei: all
+    run:
+      config: Release
+    archive:
+      config: Release
+
+  DetectionLab:
+    build:
+      targets:
+        DetectionLab: all
     run:
       config: Release
     archive:

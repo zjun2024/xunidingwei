@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+<!-- 靶场刻意不申请 com.apple.locationd.simulation：
+     它要模拟的是「一个普通 App」的视角，拿到模拟权限就失去检测意义。
+     只保留 TrollStore 安装所需的免沙盒声明。 -->
+<key>platform-application</key>
+<true/>
+<key>com.apple.private.security.no-sandbox</key>
+<true/>
+<key>com.apple.private.security.storage.AppDataContainers</key>
+<true/>
+</dict>
+</plist>
