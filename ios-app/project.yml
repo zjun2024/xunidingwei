@@ -37,6 +37,7 @@ targets:
     dependencies:
       - sdk: Security.framework
       - sdk: CoreLocation.framework
+      - sdk: MapKit.framework
       - sdk: AVFoundation.framework
 
 schemes:

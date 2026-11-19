@@ -6,7 +6,7 @@ struct ContentView: View {
 
     /// iOS 15 下同一个视图挂多个 sheet 只有最后一个生效，所以合并成一个。
     private enum Sheet: Int, Identifiable {
-        case catalog, diagnostics
+        case catalog, diagnostics, map
         var id: Int { rawValue }
     }
 
@@ -56,6 +56,11 @@ struct ContentView: View {
                     }
                 case .diagnostics:
                     DiagnosticsView()
+                case .map:
+                    MapPickerView { target in
+                        store.simulate(target)
+                        sheet = nil
+                    }
                 }
             }
             .alert(isPresented: Binding(
@@ -168,6 +173,11 @@ struct ContentView: View {
 
     private var quickSection: some View {
         Section(header: Text("快捷")) {
+            Button {
+                sheet = .map
+            } label: {
+                Label("地图选点", systemImage: "map")
+            }
             Button {
                 sheet = .catalog
             } label: {
