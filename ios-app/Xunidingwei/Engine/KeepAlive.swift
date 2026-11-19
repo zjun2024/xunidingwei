@@ -41,6 +41,7 @@ final class KeepAlive {
 
         try engine.start()
         isRunning = true
+        DiagnosticLog.step("保活已启动（无声音频）")
         scheduleLoop()
     }
 
@@ -57,6 +58,7 @@ final class KeepAlive {
 
     func stop() {
         guard isRunning else { return }
+        DiagnosticLog.step("保活已停止")
         isRunning = false
         player.stop()
         engine.stop()

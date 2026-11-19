@@ -197,7 +197,11 @@ final class LocSimStore: ObservableObject {
             return
         }
         if keepAliveEnabled {
-            try? keepAlive.start()
+            do {
+                try keepAlive.start()
+            } catch {
+                DiagnosticLog.failure("保活启动失败：\(error.localizedDescription)")
+            }
         } else {
             keepAlive.stop()
         }
