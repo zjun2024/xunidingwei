@@ -1,0 +1,21 @@
+windows电脑操作篇
+
+1，安装苹果驱动，在微软商店安装"Apple 设备"(或安装 iTunes)。
+
+2，安装 Python：打开：https://www.python.org/downloads/，下载安装，安装程序第一页要勾选 "Add python.exe to PATH"。
+
+3，打开"命令提示符"(开始菜单里搜 cmd)，输入：py -m pip install -U pymobiledevice3，最后出现 Successfully installed 就是装好了。
+
+4，下载此文件 👉：windows文件.zip，然后解压会得到 ios_loc.py 和 ios-loc-windows.bat 这两个文件，两个文件必须放同一个文件夹。
+
+5，数据线连手机,解锁,手机上点"信任此电脑"。
+
+6，双击 ios-loc-windows.bat，会打开一个黑色窗口并显示 " 请输入: "
+
+7，如果你手机第一次在 Windows 上用，且开发者模式还没开时，就输入 setup 回车，然后按窗口里的提示在手机上打开开发者模式。
+
+8，如果你手机已经开了开发者模式就无视第 7 步，直接在" 请输入: "后面输入国家名或城市名按回车即可定位成功。
+
+9，如果你想定位其它国家或城市，必须先拔掉数据线等恢复真实定位后，再重新插入数据线连接电脑，然后接着从第 6 步开始，输入国家名或城市名即可。
+
+10，用完按 Ctrl+C 看到 "已恢复真实定位" 即可结束。
