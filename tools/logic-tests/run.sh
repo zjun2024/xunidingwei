@@ -41,6 +41,14 @@ PY
 # 顶层代码只能写在 main.swift 里。
 cp "$HERE/StoreTests.swift" "$BUILD/main.swift"
 
+# 日志模块只用于真机排障，逻辑测试不需要，直接生成空实现。
+cat > "$BUILD/DiagnosticLog.swift" <<'SWIFTLOG'
+enum DiagnosticLog {
+    static func step(_ message: String) {}
+    static func failure(_ message: String) {}
+}
+SWIFTLOG
+
 # 状态机只依赖 Foundation，去掉平台框架的 import。
 sed -e 's/^import Combine$//' -e 's/^import SwiftUI$//' -e 's/^import UIKit$//' \
     "$APP/Engine/LocSimStore.swift" > "$BUILD/LocSimStore.swift"
@@ -53,6 +61,7 @@ sed -e 's/^import Combine$//' -e 's/^import SwiftUI$//' -e 's/^import UIKit$//' 
     "$APP/Models.swift" \
     "$APP/Generated/LocationData.swift" \
     "$BUILD/LocSimEngine.swift" \
+    "$BUILD/DiagnosticLog.swift" \
     "$BUILD/LocSimStore.swift" \
     "$BUILD/main.swift" \
     -o "$BUILD/logic-tests"

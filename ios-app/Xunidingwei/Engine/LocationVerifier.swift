@@ -31,6 +31,7 @@ final class LocationVerifier: NSObject, ObservableObject, CLLocationManagerDeleg
     func verify(expected target: LocationTarget) {
         expected = CLLocationCoordinate2D(latitude: target.latitude, longitude: target.longitude)
         verdict = .pending
+        DiagnosticLog.step("验证开始，期望坐标 \(target.coordinateText)，授权状态=\(manager.authorizationStatus.rawValue)")
 
         switch manager.authorizationStatus {
         case .notDetermined:
@@ -59,10 +60,14 @@ final class LocationVerifier: NSObject, ObservableObject, CLLocationManagerDeleg
         guard let expected, let actual = locations.last?.coordinate else { return }
         let from = CLLocation(latitude: expected.latitude, longitude: expected.longitude)
         let to = CLLocation(latitude: actual.latitude, longitude: actual.longitude)
-        verdict = from.distance(from: to) <= Self.toleranceMeters ? .matched : .notApplied(actual: actual)
+        let distance = from.distance(from: to)
+        DiagnosticLog.step(String(format: "系统返回坐标 %.6f, %.6f，与期望相差 %.0f 米",
+                                  actual.latitude, actual.longitude, distance))
+        verdict = distance <= Self.toleranceMeters ? .matched : .notApplied(actual: actual)
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        DiagnosticLog.failure("读取系统坐标失败：\(error.localizedDescription)")
         verdict = .failed(error.localizedDescription)
     }
 }

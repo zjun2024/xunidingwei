@@ -97,8 +97,15 @@ final class LocSimEngine {
 
     private func makeManager() throws -> AnyObject {
         if let manager { return manager }
-        guard let instance = makeRawManager() else { throw EngineError.classUnavailable }
-        guard hasSimulationEntitlement else { throw EngineError.noEntitlement }
+        guard let instance = makeRawManager() else {
+            DiagnosticLog.failure("取不到 CLSimulationManager 实例")
+            throw EngineError.classUnavailable
+        }
+        guard hasSimulationEntitlement else {
+            DiagnosticLog.failure("缺少 locationd.simulation 权限")
+            throw EngineError.noEntitlement
+        }
+        DiagnosticLog.step("CLSimulationManager 实例已创建，权限检查通过")
         manager = instance
         return instance
     }
@@ -157,12 +164,20 @@ final class LocSimEngine {
             timestamp: Date()
         )
 
+        DiagnosticLog.step("开始模拟 -> \(target.coordinateText) (\(target.label))")
+
         try call("stopLocationSimulation", on: manager)
+        DiagnosticLog.step("stopLocationSimulation 完成")
         try call("clearSimulatedLocations", on: manager)
+        DiagnosticLog.step("clearSimulatedLocations 完成")
         try appendLocation(location, to: manager)
+        DiagnosticLog.step("appendSimulatedLocation 完成 lat=\(target.latitude) lon=\(target.longitude)")
         try call("flush", on: manager)
+        DiagnosticLog.step("flush 完成")
         try call("startLocationSimulation", on: manager)
+        DiagnosticLog.step("startLocationSimulation 完成")
         postTimezoneUpdate()
+        DiagnosticLog.step("已发出时区刷新通知")
 
         activeTarget = target
         startedAt = Date()
@@ -175,6 +190,7 @@ final class LocSimEngine {
             startedAt = nil
             return
         }
+        DiagnosticLog.step("恢复真实定位")
         try call("stopLocationSimulation", on: manager)
         try call("clearSimulatedLocations", on: manager)
         try call("flush", on: manager)
