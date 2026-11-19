@@ -1,0 +1,70 @@
+name: Build IPA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ios-app/**'
+      - 'windows/ios_loc.py'
+      - 'tools/**'
+      - '.github/workflows/build-ipa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 校验地点表与生成文件一致
+        run: python3 tools/gen_locations.py --check
+
+      - name: 校验两端解析规则一致
+        run: python3 tools/test_parity.py
+
+      - name: 编译并运行地点解析自检
+        run: |
+          mkdir -p /tmp/verify && cd /tmp/verify
+          cp "$GITHUB_WORKSPACE/tools/verify_catalog.swift" main.swift
+          cp "$GITHUB_WORKSPACE/ios-app/Xunidingwei/Models.swift" .
+          cp "$GITHUB_WORKSPACE/ios-app/Xunidingwei/Generated/LocationData.swift" .
+          swiftc main.swift Models.swift LocationData.swift -o verify
+          ./verify
+
+      - name: 编译并运行引擎与状态机逻辑测试
+        run: bash tools/logic-tests/run.sh
+
+      - name: 安装工具
+        run: |
+          brew install xcodegen ldid
+
+      - name: 打包 iPA
+        working-directory: ios-app
+        run: ./build_ipa.sh
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: Xunidingwei-ipa
+          path: ios-app/build/Xunidingwei.ipa
+          if-no-files-found: error
+
+      - name: 发布到 Release
+        # 仓库的 Actions 令牌可能没有写权限，发布失败不影响上面的 artifact 下载
+        if: github.ref == 'refs/heads/main'
+        continue-on-error: true
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: 寻定位 v${{ github.run_number }}
+          body: |
+            手机端虚拟定位 iPA（TrollStore / 巨魔环境直接安装）。
+
+            安装：把 `Xunidingwei.ipa` 传到手机，用 TrollStore 打开即可。
+          files: ios-app/build/Xunidingwei.ipa
+          draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
