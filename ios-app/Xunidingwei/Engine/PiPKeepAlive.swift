@@ -48,7 +48,11 @@ final class PiPKeepAlive: NSObject, ObservableObject {
 
         if controller == nil {
             // 用 playerLayer 初始化器：它不需要播放代理，AVPlayer 自身即内容源。
-            let pip = AVPictureInPictureController(playerLayer: playerLayer)
+            // 该初始化器返回可选值，系统不支持时为空。
+            guard let pip = AVPictureInPictureController(playerLayer: playerLayer) else {
+                report("无法创建画中画控制器")
+                return
+            }
             pip.delegate = self
             pip.canStartPictureInPictureAutomaticallyFromInline = true
             controller = pip
