@@ -136,16 +136,17 @@ struct ContentView: View {
                     Text("开启后会出现一个小圆标，表示正在模拟定位。iOS 只允许画中画形式悬浮，切到其他 App 也能看到，同时保持后台运行。")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    // 画中画只能从屏幕上的内联位置启动，所以这块视图必须真实存在。
-                    PiPHostView(displayLayer: PiPKeepAlive.shared.displayLayer)
-                        .frame(width: 1, height: 1)
-                        .opacity(0.01)
-                        .allowsHitTesting(false)
-                    if let error = store.pipError {
-                        Text(error)
-                            .font(.caption)
-                            .foregroundColor(.orange)
-                    }
+                }
+                // 画中画只能从屏幕上的内联位置启动。这块视图必须始终存在、可见且有
+                // 实际尺寸，否则系统判定内联层不可用，startPictureInPicture 会静默失败。
+                // 空闲时它显示灰色圆，模拟时变绿，正好当作 App 内的状态指示。
+                PiPHostView(displayLayer: PiPKeepAlive.shared.displayLayer)
+                    .frame(width: 44, height: 44)
+                    .allowsHitTesting(false)
+                if store.pipEnabled, let error = store.pipError {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.orange)
                 }
                 Button {
                     if let target = store.activeTarget {
