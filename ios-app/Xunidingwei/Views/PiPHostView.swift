@@ -1,4 +1,5 @@
 import AVFoundation
+import AVKit
 import SwiftUI
 import UIKit
 
@@ -7,21 +8,21 @@ import UIKit
 /// 画中画只能从「内联位置」启动，所以这一小块视图必须真的在屏幕上。
 /// 它平时缩成一条细条，不干扰界面。
 struct PiPHostView: UIViewRepresentable {
-    let displayLayer: AVSampleBufferDisplayLayer
+    let playerLayer: AVPlayerLayer
 
     func makeUIView(context: Context) -> PiPContainerView {
         let view = PiPContainerView()
         view.backgroundColor = .clear
-        view.hostedLayer = displayLayer
+        view.hostedLayer = playerLayer
         return view
     }
 
     func updateUIView(_ uiView: PiPContainerView, context: Context) {
-        uiView.hostedLayer = displayLayer
+        uiView.hostedLayer = playerLayer
     }
 
     final class PiPContainerView: UIView {
-        var hostedLayer: AVSampleBufferDisplayLayer? {
+        var hostedLayer: CALayer? {
             didSet {
                 guard let hostedLayer, hostedLayer.superlayer !== layer else { return }
                 hostedLayer.frame = bounds
