@@ -47,10 +47,8 @@ final class PiPKeepAlive: NSObject, ObservableObject {
         guard loadLoopVideo() else { return }
 
         if controller == nil {
-            let source = AVPictureInPictureController.ContentSource(
-                playerLayer: playerLayer,
-                playbackDelegate: self)
-            let pip = AVPictureInPictureController(contentSource: source)
+            // 用 playerLayer 初始化器：它不需要播放代理，AVPlayer 自身即内容源。
+            let pip = AVPictureInPictureController(playerLayer: playerLayer)
             pip.delegate = self
             pip.canStartPictureInPictureAutomaticallyFromInline = true
             controller = pip
@@ -131,35 +129,5 @@ extension PiPKeepAlive: AVPictureInPictureControllerDelegate {
         isRunning = false
         report("画中画启动失败：\(error.localizedDescription)")
         DiagnosticLog.failure("画中画启动失败：\(error.localizedDescription)")
-    }
-}
-
-// MARK: - 播放代理
-
-extension PiPKeepAlive: AVPictureInPicturePlaybackDelegate {
-
-    func pictureInPictureController(_ controller: AVPictureInPictureController,
-                                   setPlaying playing: Bool) {
-        playing ? player.play() : player.pause()
-    }
-
-    func pictureInPictureControllerTimeRangeForPlayback(
-        _ controller: AVPictureInPictureController) -> CMTimeRange {
-        // 无限时长，避免系统按「播完了」结束会话。
-        CMTimeRange(start: .negativeInfinity, duration: .positiveInfinity)
-    }
-
-    func pictureInPictureControllerIsPlaybackPaused(
-        _ controller: AVPictureInPictureController) -> Bool {
-        false
-    }
-
-    func pictureInPictureController(_ controller: AVPictureInPictureController,
-                                   didTransitionToRenderSize newRenderSize: CMVideoDimensions) {}
-
-    func pictureInPictureController(_ controller: AVPictureInPictureController,
-                                   skipByInterval skipInterval: CMTime,
-                                   completion completionHandler: @escaping () -> Void) {
-        completionHandler()
     }
 }
