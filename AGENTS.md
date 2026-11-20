@@ -64,8 +64,23 @@ swiftc -frontend -parse $(find ios-app/Xunidingwei -name '*.swift')
 ## 悬浮窗保活（画中画）
 
 iOS 没有 Android 那种任意悬浮窗，跨 App 悬浮唯一形式是画中画。因此「悬浮窗保活」
-就是 PiP：`AVSampleBufferDisplayLayer` 每秒喂一帧，窗口里只画一个圆形定位图标
-（不带文字，画布 1:1、圆占中央 78%，四周透明，是画中画能做到的最小视觉体积）；
+就是 PiP：`AVPlayer` 循环播放内嵌的 `Resources/pip-loop.mp4`（12KB 圆标），
+解码走系统管线，App 不分配像素缓冲。
+
+**不要用 `AVSampleBufferDisplayLayer`。** 它要求 App 自己 `CVPixelBufferCreate`，
+而巨魔环境（ldid 假签名）下申请 IOSurface 会失败，报「无法创建像素缓冲」，
+画中画永远黑屏。这是踩过的坑，v13–v15 全部卡在这里。
+
+其它要点：
+
+- 用 `AVPictureInPictureController(playerLayer:)`，它返回**可选值**需解包；
+  该初始化器不需要播放代理，`AVPlayer` 自身即内容源
+- 内联宿主视图必须常驻、可见、有实际尺寸（44x44）。1x1、opacity(0)、
+  按开关条件插入都会让系统判定内联层不可用，`startPictureInPicture` 静默失败
+- `isPictureInPicturePossible` 要等内联层完成布局与首帧渲染才变 true，
+  需按 0.25 秒间隔重试（当前 8 次）
+- 视频播完要 `seek(to: .zero)` 回到开头，否则系统按「播完了」结束会话
+
 会话活跃期间进程不被挂起，兼作保活。
 
 要点：
