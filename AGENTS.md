@@ -64,7 +64,8 @@ swiftc -frontend -parse $(find ios-app/Xunidingwei -name '*.swift')
 ## 悬浮窗保活（画中画）
 
 iOS 没有 Android 那种任意悬浮窗，跨 App 悬浮唯一形式是画中画。因此「悬浮窗保活」
-就是 PiP：`AVSampleBufferDisplayLayer` 每秒喂一帧，窗口里显示城市与坐标；
+就是 PiP：`AVSampleBufferDisplayLayer` 每秒喂一帧，窗口里只画一个圆形定位图标
+（不带文字，画布 1:1、圆占中央 78%，四周透明，是画中画能做到的最小视觉体积）；
 会话活跃期间进程不被挂起，兼作保活。
 
 要点：

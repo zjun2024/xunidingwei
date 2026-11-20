@@ -5,7 +5,7 @@ import UIKit
 /// 画中画悬浮窗保活。
 ///
 /// iOS 不允许任意悬浮窗，跨 App 悬浮只有画中画这一条路。所以这里用
-/// AVSampleBufferDisplayLayer 作为画中画内容源：悬浮窗里显示当前模拟坐标，
+/// AVSampleBufferDisplayLayer 作为画中画内容源：悬浮窗里显示一个圆形定位图标，
 /// 同时因为画中画会话活跃，App 不会在切到后台后被挂起。
 ///
 /// 与 KeepAlive（无声音频）的区别：音频保活没有界面反馈，用户不知道还在不在；
@@ -23,7 +23,6 @@ final class PiPKeepAlive: NSObject, ObservableObject {
     private var controller: AVPictureInPictureController?
     private var feeder: Timer?
     private var formatDescription: CMVideoFormatDescription?
-    private var caption = "寻定位"
 
     /// 画中画窗口的尺寸由系统按画面宽高比决定，App 无法直接指定。
     /// 用正方形画布能让窗口收到最小，内容再画成圆形即可。
@@ -41,14 +40,11 @@ final class PiPKeepAlive: NSObject, ObservableObject {
 
     // MARK: - 启停
 
-    /// - Parameter caption: 悬浮窗上显示的文字，通常是「城市 + 坐标」。
-    func start(caption text: String) {
+    func start() {
         guard Self.isSupported else {
             lastError = "当前系统不支持画中画"
             return
         }
-        caption = text
-
         if controller == nil {
             let source = AVPictureInPictureController.ContentSource(
                 sampleBufferDisplayLayer: displayLayer,
@@ -75,7 +71,7 @@ final class PiPKeepAlive: NSObject, ObservableObject {
                 }
             }
         }
-        DiagnosticLog.step("画中画保活请求启动：\(text)")
+        DiagnosticLog.step("画中画保活请求启动")
     }
 
     func stop() {
@@ -156,13 +152,13 @@ final class PiPKeepAlive: NSObject, ObservableObject {
                     | CGBitmapInfo.byteOrder32Little.rawValue)
         else { return nil }
 
-        draw(caption: caption, in: context, size: bufferSize)
+        draw(in: context, size: bufferSize)
         return pixelBuffer
     }
 
-    /// 画一个圆形徽标：外圈绿点 + 中央定位图标 + 底部一行坐标。
-    /// 圆形比文字块更小更不挡视线，也更容易一眼确认状态。
-    private func draw(caption: String, in context: CGContext, size: CGSize) {
+    /// 画一个纯圆形徽标：深色圆底 + 绿色描边 + 中央定位图标，不带文字。
+    /// 圆形只占画布中央，四周透明，是画中画能做到的最小视觉体积。
+    private func draw(in context: CGContext, size: CGSize) {
         context.setFillColor(UIColor.clear.cgColor)
         context.clear(CGRect(origin: .zero, size: size))
 
@@ -170,7 +166,8 @@ final class PiPKeepAlive: NSObject, ObservableObject {
         defer { UIGraphicsPopContext() }
 
         let center = CGPoint(x: size.width / 2, y: size.height / 2)
-        let radius = min(size.width, size.height) / 2 - 8
+        // 圆只占画布中央约 78%，四周留透明边，窗口看起来更小。
+        let radius = min(size.width, size.height) / 2 * 0.78
 
         // 深色圆底
         context.setFillColor(UIColor(white: 0.09, alpha: 1).cgColor)
@@ -183,26 +180,14 @@ final class PiPKeepAlive: NSObject, ObservableObject {
         context.strokeEllipse(in: CGRect(x: center.x - radius, y: center.y - radius,
                                          width: radius * 2, height: radius * 2))
 
-        // 中央定位图标
-        let symbolConfig = UIImage.SymbolConfiguration(pointSize: radius * 0.7, weight: .semibold)
+        // 只留定位图标，居中显示。
+        let symbolConfig = UIImage.SymbolConfiguration(pointSize: radius * 0.95, weight: .semibold)
         if let icon = UIImage(systemName: "location.fill", withConfiguration: symbolConfig)?
             .withTintColor(.white, renderingMode: .alwaysOriginal) {
             let iconSize = icon.size
             icon.draw(at: CGPoint(x: center.x - iconSize.width / 2,
-                                  y: center.y - iconSize.height / 2 - radius * 0.12))
+                                  y: center.y - iconSize.height / 2))
         }
-
-        // 底部坐标
-        let detail = caption.components(separatedBy: "\n").last ?? caption
-        let attrs: [NSAttributedString.Key: Any] = [
-            .font: UIFont.monospacedDigitSystemFont(ofSize: radius * 0.2, weight: .medium),
-            .foregroundColor: UIColor(white: 0.78, alpha: 1),
-        ]
-        let textSize = (detail as NSString).size(withAttributes: attrs)
-        (detail as NSString).draw(
-            at: CGPoint(x: center.x - textSize.width / 2,
-                        y: center.y + radius * 0.42),
-            withAttributes: attrs)
     }
 }
 

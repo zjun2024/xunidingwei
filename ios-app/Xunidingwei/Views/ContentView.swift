@@ -133,7 +133,7 @@ struct ContentView: View {
                     set: { store.pipEnabled = $0 }
                 ))
                 if store.pipEnabled {
-                    Text("开启后会出现一个悬浮小窗显示当前坐标。iOS 只允许画中画形式悬浮，切到其他 App 也能看到，同时保持后台运行。")
+                    Text("开启后会出现一个小圆标，表示正在模拟定位。iOS 只允许画中画形式悬浮，切到其他 App 也能看到，同时保持后台运行。")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     // 画中画只能从屏幕上的内联位置启动，所以这块视图必须真实存在。

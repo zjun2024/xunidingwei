@@ -58,13 +58,13 @@ final class PiPKeepAlive {
     static let shared = PiPKeepAlive()
     static var isSupported: Bool { true }
     private(set) var lastError: String?
-    private(set) var startedCaptions: [String] = []
+    private(set) var startCount = 0
     private(set) var isRunning = false
 
     private init() {}
 
-    func start(caption: String) {
-        startedCaptions.append(caption)
+    func start() {
+        startCount += 1
         isRunning = true
     }
 

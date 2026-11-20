@@ -42,7 +42,7 @@ let pip = PiPKeepAlive.shared
 expect(store.pipEnabled == false, "悬浮窗保活默认应为关闭")
 store.pipEnabled = true
 expect(!pip.isRunning, "未模拟定位时不应启动画中画")
-expect(pip.startedCaptions.isEmpty, "未模拟定位时不应喂入任何画面")
+expect(pip.startCount == 0, "未模拟定位时不应启动画中画")
 expect(UserDefaults.standard.object(forKey: "pipEnabled") as? Bool == true,
        "悬浮窗开关应写入 UserDefaults")
 store.pipEnabled = false

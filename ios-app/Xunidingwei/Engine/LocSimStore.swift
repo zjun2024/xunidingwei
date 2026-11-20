@@ -229,7 +229,7 @@ final class LocSimStore: ObservableObject {
 
     /// 悬浮窗保活的联动逻辑，与 applyKeepAlive 平行。
     private func applyPiP() {
-        guard isSimulating, let target = activeTarget else {
+        guard isSimulating else {
             pip.stop()
             pipError = nil
             return
@@ -239,8 +239,7 @@ final class LocSimStore: ObservableObject {
             pipError = nil
             return
         }
-        // 悬浮窗上分两行显示：城市名 + 坐标，方便一眼确认当前状态。
-        pip.start(caption: "\(target.label)\n\(target.coordinateText)")
+        pip.start()
         pipError = pip.lastError
     }
 
